@@ -1,7 +1,7 @@
-import {Controller, Get, Post} from '@nestjs/common';
+import { Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UserService } from './user.service';
-import {PostUserResponse} from "./dto/post-user.response.dto";
+import { PostUserResponse } from './dto/post-user.response.dto';
 
 @Controller('user')
 export class UserController {
@@ -23,8 +23,8 @@ export class UserController {
   })
   @ApiOperation({ summary: '유저조회 API' })
   @Get('/:userId')
-  async postAdminSignIn() {
-    // return await this.authService.createAdminSignIn(postAdminSignIn);
+  async postAdminSignIn(@Param('userId') id: number) {
+    // return await this.userService.retrieveUserByUserId(id);
   }
 
   /**
@@ -44,6 +44,6 @@ export class UserController {
   @ApiOperation({ summary: '유저생성 API' })
   @Post()
   async postAdminSignUp() {
-    // return await this.userService.createAdminSignUp(postAdminSignUp);
+    // return await this.userService.createUser();
   }
 }
