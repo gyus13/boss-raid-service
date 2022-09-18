@@ -1,7 +1,10 @@
 import { Controller, Get, Param, Patch, Post } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { BossRaidService } from './boss-raid.service';
-import {GetBossRaidResponse} from "./dto/get-boss-raid.response.dto";
+import { GetBossRaidResponse } from './dto/get-boss-raid.response.dto';
+import { PostBossRaidRequest } from './dto/post-boss-raid.request.dto';
+import {PostBossRaidResponse} from "./dto/post-boss-raid.response.dto";
+import {PatchBossRaidRequest} from "./dto/patch-boss-raid.request.dto";
 
 @Controller('bossRaid')
 export class BossRaidController {
@@ -35,37 +38,22 @@ export class BossRaidController {
   @ApiResponse({
     status: 200,
     description: '성공',
-    // type: PostUserResponse,
+    type: PostBossRaidResponse,
   })
   @ApiResponse({
     status: 500,
     description: '서버 에러',
   })
   @ApiOperation({ summary: '보스레이드 시작 API' })
+  @ApiBody({
+    description: '보스 레이드 시작 DTO',
+    type: PostBossRaidRequest,
+  })
   @Post('/enter')
   async postBossRaid() {
     // return await this.userService.createUser();
   }
 
-  /**
-   * description : 보스레이드 시작 API
-   * @param non
-   * @returns non
-   */
-  @ApiResponse({
-    status: 200,
-    description: '성공',
-    // type: PostUserResponse,
-  })
-  @ApiResponse({
-    status: 500,
-    description: '서버 에러',
-  })
-  @ApiOperation({ summary: '보스레이드 시작 API' })
-  @Post('/enter')
-  async postBossRaid() {
-    // return await this.userService.createUser();
-  }
 
   /**
    * description : 보스레이드 종료 API
@@ -83,6 +71,10 @@ export class BossRaidController {
   })
   @ApiOperation({ summary: '보스레이드 종료 API' })
   @Patch('/end')
+  @ApiBody({
+    description: '보스레이드 종료 DTO',
+    type: PatchBossRaidRequest,
+  })
   async patchBossRaid() {
     // return await this.userService.createUser();
   }
@@ -101,9 +93,9 @@ export class BossRaidController {
     status: 500,
     description: '서버 에러',
   })
-  @ApiOperation({ summary: '보스레이드 랭킹 조 API' })
+  @ApiOperation({ summary: '보스레이드 랭킹 조회 API' })
   @Get('/topRankerList')
-  async getBossRaidRank() {
-    // return await this.userService.createUser();
+  async getBossRaidRankList() {
+    // return await this.userService.retrieveRankList();
   }
 }
