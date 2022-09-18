@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { BossRaidService } from './boss-raid.service';
+import {GetBossRaidResponse} from "./dto/get-boss-raid.response.dto";
 
 @Controller('bossRaid')
 export class BossRaidController {
@@ -14,7 +15,7 @@ export class BossRaidController {
   @ApiResponse({
     status: 200,
     description: '성공',
-    // type: PostUserResponse,
+    type: GetBossRaidResponse,
   })
   @ApiResponse({
     status: 500,
@@ -100,7 +101,7 @@ export class BossRaidController {
     status: 500,
     description: '서버 에러',
   })
-  @ApiOperation({ summary: '보스레이드 랭킹 조회 API' })
+  @ApiOperation({ summary: '보스레이드 랭킹 조 API' })
   @Get('/topRankerList')
   async getBossRaidRank() {
     // return await this.userService.createUser();

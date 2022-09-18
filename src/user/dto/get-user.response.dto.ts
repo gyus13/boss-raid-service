@@ -40,6 +40,13 @@ export abstract class GetUserResultData {
     isArray: false,
   })
   bossRaidHistory: BossRaidInfo;
+
+  @ApiProperty({
+    example: 30,
+    description: '총 점수',
+    required: true,
+  })
+  totalScore: number;
 }
 
 export abstract class GetUserResponse extends BaseResponse {
