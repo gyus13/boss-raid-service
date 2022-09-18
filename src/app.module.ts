@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { OrderModule } from './order/order.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
+import { BossRaidModule } from './boss-raid/boss-raid.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { UserModule } from './user/user.module';
       timezone: 'Asia/Seoul',
     }),
     UserModule,
+    BossRaidModule,
   ],
   controllers: [AppController],
   providers: [AppService],
