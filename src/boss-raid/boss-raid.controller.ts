@@ -3,8 +3,8 @@ import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { BossRaidService } from './boss-raid.service';
 import { GetBossRaidResponse } from './dto/get-boss-raid.response.dto';
 import { PostBossRaidRequest } from './dto/post-boss-raid.request.dto';
-import {PostBossRaidResponse} from "./dto/post-boss-raid.response.dto";
-import {PatchBossRaidRequest} from "./dto/patch-boss-raid.request.dto";
+import { PostBossRaidResponse } from './dto/post-boss-raid.response.dto';
+import { PatchBossRaidRequest } from './dto/patch-boss-raid.request.dto';
 
 @Controller('bossRaid')
 export class BossRaidController {
@@ -53,7 +53,6 @@ export class BossRaidController {
   async postBossRaid() {
     // return await this.userService.createUser();
   }
-
 
   /**
    * description : 보스레이드 종료 API
