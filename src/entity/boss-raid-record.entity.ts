@@ -16,6 +16,10 @@ export class BossRaidRecordEntity extends CommonEntity {
 
   @ApiProperty()
   @Column()
+  expireTime: string;
+
+  @ApiProperty()
+  @Column()
   canEnter: boolean;
 
   @ApiProperty({ description: '유저' })
