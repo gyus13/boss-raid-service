@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import {Body, Controller, Get, Param, Patch, Post} from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { BossRaidService } from './boss-raid.service';
 import { GetBossRaidResponse } from './dto/get-boss-raid.response.dto';
@@ -32,8 +32,8 @@ export class BossRaidController {
 
   /**
    * description : 보스레이드 시작 API
-   * @param non
    * @returns non
+   * @param postOrderRequestDto
    */
   @ApiResponse({
     status: 200,
@@ -50,8 +50,8 @@ export class BossRaidController {
     type: PostBossRaidRequest,
   })
   @Post('/enter')
-  async postBossRaid() {
-    // return await this.userService.createUser();
+  async postBossRaid(@Body() postBossRaidRequest: PostBossRaidRequest) {
+    return await this.bossRaidService.createBossRaid(postBossRaidRequest);
   }
 
   /**
@@ -62,7 +62,6 @@ export class BossRaidController {
   @ApiResponse({
     status: 200,
     description: '성공',
-    // type: PostUserResponse,
   })
   @ApiResponse({
     status: 500,
