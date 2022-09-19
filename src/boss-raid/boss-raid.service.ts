@@ -85,4 +85,45 @@ export class BossRaidService {
       await queryRunner.release();
     }
   }
+
+  async closeBossRaid(patchBossRaidRequest) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      // 입력한 번호에 해당하는 유저값 추출
+      // const findBossRaidIdByLevel = await this.bossRaidRepository.findOne({
+      //   where: {
+      //     level: postBossRaidRequest.level,
+      //   },
+      // });
+
+      // board 수정
+      await queryRunner.manager.update(
+        BossRaidRecordEntity,
+        {
+          userId: patchBossRaidRequest.userId,
+          raidRecordId: patchBossRaidRequest.raidRecordId,
+        },
+        { canEnter: true },
+      );
+
+      // Response의 result 객체에 Data를 담는 부분
+      const data = {};
+
+      const result = makeResponse(response.SUCCESS, data);
+
+      // Commit
+      await queryRunner.commitTransaction();
+
+      return result;
+    } catch (error) {
+      // Rollback
+      await queryRunner.rollbackTransaction();
+      console.log(error);
+      return response.ERROR;
+    } finally {
+      await queryRunner.release();
+    }
+  }
 }

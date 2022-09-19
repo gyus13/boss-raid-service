@@ -73,8 +73,8 @@ export class BossRaidController {
     description: '보스레이드 종료 DTO',
     type: PatchBossRaidRequest,
   })
-  async patchBossRaid() {
-    // return await this.userService.createUser();
+  async patchBossRaid(@Body() patchBossRaidRequest: PatchBossRaidRequest) {
+    return await this.bossRaidService.closeBossRaid(patchBossRaidRequest);
   }
 
   /**
