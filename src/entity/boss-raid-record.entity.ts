@@ -8,6 +8,10 @@ import { BossRaidEntity } from './boss-raid.entity';
 export class BossRaidRecordEntity extends CommonEntity {
   @ApiProperty()
   @Column()
+  enterTime: string;
+
+  @ApiProperty()
+  @Column()
   endTime: string;
 
   @ApiProperty()

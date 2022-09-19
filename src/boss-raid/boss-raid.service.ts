@@ -18,19 +18,10 @@ export class BossRaidService {
 
   async retrieveBossRaidStatus() {
     try {
-      // 입력한 번호에 해당하는 유저값 추출
-      const bossRaidRecord = await this.bossRaidRepository.find();
-
-      // 존재하지 않는 유저 체크
-      if (bossRaidRecord == undefined) {
-        return response.NON_EXIST_USER;
-      }
-
       // Response의 result 객체에 Data를 담는 부분
       const data = {
-        totalScore: 'number',
-        // bossRaidHistory:
-        // { raidRecordId:number, score:number, enterTime:string, endTime:string },
+        canEnter: 'number',
+        enteredUserId: 1,
       };
 
       const result = makeResponse(response.SUCCESS, data);

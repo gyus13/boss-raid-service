@@ -6,13 +6,13 @@ import { ApiProperty } from '@nestjs/swagger';
 export class BossRaidEntity extends CommonEntity {
   @ApiProperty()
   @Column()
-  endedAt: string;
+  bossRaidLimitSeconds: number;
 
   @ApiProperty()
   @Column()
-  deliveryStatus: string;
+  level: number;
 
   @ApiProperty()
   @Column()
-  price: number;
+  score: number;
 }
