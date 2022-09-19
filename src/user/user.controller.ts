@@ -24,7 +24,7 @@ export class UserController {
   @ApiOperation({ summary: '유저조회 API' })
   @Get('/:userId')
   async getUser(@Param('userId') id: number) {
-    // return await this.userService.retrieveUserByUserId(id);
+    return await this.userService.retrieveUserByUserId(id);
   }
 
   /**

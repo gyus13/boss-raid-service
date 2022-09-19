@@ -27,7 +27,7 @@ export class BossRaidController {
   @ApiOperation({ summary: '보스레이드 상태 조회 API' })
   @Get()
   async getBossRaid() {
-    // return await this.userService.retrieveUserByUserId(id);
+    return await this.bossRaidService.retrieveBossRaidStatus();
   }
 
   /**
