@@ -76,8 +76,8 @@ export function generateDateFormatComponent() {
 }
 
 // Date to string 함수
-export function defaultThreeMinuteDateTime() {
-  const object = generateThreeMinuteFormatComponent();
+export function defaultThreeMinuteDateTime(raidTime: number) {
+  const object = generateThreeMinuteFormatComponent(raidTime);
 
   return (
     object.year +
@@ -94,7 +94,7 @@ export function defaultThreeMinuteDateTime() {
   );
 }
 
-export function generateThreeMinuteFormatComponent() {
+export function generateThreeMinuteFormatComponent(raidTime: number) {
   const date = new Date();
 
   const year = date.getFullYear();
@@ -114,12 +114,12 @@ export function generateThreeMinuteFormatComponent() {
       : date.getHours().toString();
 
   const min =
-    date.getMinutes() + 3 < 10
+    date.getMinutes() < 10
       ? '0' + date.getMinutes().toString()
       : date.getMinutes().toString();
 
   const sec =
-    date.getSeconds() < 10
+    date.getSeconds() + raidTime < 10
       ? '0' + date.getSeconds().toString()
       : date.getSeconds().toString();
 

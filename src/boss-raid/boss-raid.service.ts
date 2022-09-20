@@ -2,15 +2,18 @@ import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { HttpService } from '@nestjs/axios';
 import { response } from '../common/response.utils';
-import {defaultCurrentDateTime, defaultThreeMinuteDateTime, makeResponse} from '../config/function.utils';
+import {
+  defaultCurrentDateTime,
+  defaultThreeMinuteDateTime,
+  makeResponse,
+} from '../config/function.utils';
 import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from '../entity/user.entity';
-import { BossRaidEntity } from '../entity/boss-raid.entity';
 import { PostBossRaidRequest } from './dto/post-boss-raid.request.dto';
 import { BossRaidRecordEntity } from '../entity/boss-raid-record.entity';
 import { firstValueFrom } from 'rxjs';
-import {Status} from "../config/valuable.utils";
+import { Status } from '../config/valuable.utils';
 
 @Injectable()
 export class BossRaidService {
@@ -19,8 +22,6 @@ export class BossRaidService {
     private dataSource: DataSource,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
-    @InjectRepository(BossRaidEntity)
-    private readonly bossRaidRepository: Repository<BossRaidEntity>,
     private readonly httpService: HttpService,
   ) {}
 
@@ -56,29 +57,47 @@ export class BossRaidService {
     await queryRunner.connect();
     await queryRunner.startTransaction('READ COMMITTED');
     try {
-      // 입력한 번호에 해당하는 유저값 추출
-      const findBossRaidIdByLevel = await this.bossRaidRepository.findOne({
-        where: {
-          level: postBossRaidRequest.level,
-        },
+      let raidData = {
+        bossRaidLimitSeconds: await this.cacheManager.get(
+          'bossRaidLimitSeconds',
+        ),
+        levels: await this.cacheManager.get('levels'),
+      };
+
+      // static data 캐시 메모리 적재 함수
+      if (!raidData.levels) {
+        await this.getStaticData();
+
+        raidData = {
+          bossRaidLimitSeconds: await this.cacheManager.get(
+            'bossRaidLimitSeconds',
+          ),
+          levels: JSON.parse(await this.cacheManager.get('levels')),
+        };
+      }
+
+      raidData.levels.forEach((object) => {
+        if (object.level == postBossRaidRequest.level) {
+          console.log('level:', object.score);
+          const raidLevel = object.level;
+          const raidScore = object.score;
+        }
       });
-
-      // static data 캐시 메모리 적재
-      await this.getStaticData();
-
-      const CacheData = await this.cacheManager.get('key');
-
-      console.log(CacheData);
 
       // User 인스턴스 생성후, 정보 담는 부분
       const bossRaidRecord = new BossRaidRecordEntity();
       bossRaidRecord.userId = postBossRaidRequest.userId;
-      bossRaidRecord.bossRaidId = findBossRaidIdByLevel.id;
       bossRaidRecord.createdAt = defaultCurrentDateTime();
       bossRaidRecord.updatedAt = defaultCurrentDateTime();
       bossRaidRecord.status = Status.ACTIVE;
       bossRaidRecord.enterTime = defaultCurrentDateTime();
-      bossRaidRecord.expireTime = defaultThreeMinuteDateTime();
+      bossRaidRecord.canEnter = false;
+      bossRaidRecord.endTime = null;
+      bossRaidRecord.level = null;
+      bossRaidRecord.score = null;
+      bossRaidRecord.expireTime = defaultThreeMinuteDateTime(
+        raidData.bossRaidLimitSeconds,
+      );
       const bossRaidRecordData = await queryRunner.manager.save(bossRaidRecord);
 
       // 키값 초기화
@@ -149,22 +168,29 @@ export class BossRaidService {
 
   async getStaticData(): Promise<string> {
     try {
+      // 키값 초기화
+      await this.cacheManager.del('bossRaidLimitSeconds');
+      await this.cacheManager.del('levels');
+
       const resData = await firstValueFrom(
         this.httpService.get(
           `https://dmpilf5svl7rv.cloudfront.net/assignment/backend/bossRaidData.json`,
         ),
       );
 
-      // 키값 초기화
-      await this.cacheManager.del('key');
+      const raidInfo = resData.data.bossRaids[0];
 
-      const { condition } = await resData.data.current;
+      await this.cacheManager.set(
+        'bossRaidLimitSeconds',
+        String(raidInfo.bossRaidLimitSeconds),
+        { ttl: 180 },
+      );
 
-      // Data를 캐시에 만료시간 180초으로 설정하여 저장
-      await this.cacheManager.set('key', resData, {
+      await this.cacheManager.set('levels', JSON.stringify(raidInfo.levels), {
         ttl: 180,
       });
 
+      const { condition } = await resData.data.current;
       return condition.text;
     } catch (error) {
       console.error(error.message);
