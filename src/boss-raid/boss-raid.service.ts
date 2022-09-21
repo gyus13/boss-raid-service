@@ -108,8 +108,6 @@ export class BossRaidService {
         const bossRaidRecordData = await queryRunner.manager.save(
           bossRaidRecord,
         );
-        // 키값 초기화
-        await this.cacheManager.del('key');
 
         // Response의 result 객체에 Data를 담는 부분
         const data = {
@@ -141,48 +139,78 @@ export class BossRaidService {
     await queryRunner.connect();
     await queryRunner.startTransaction('READ COMMITTED');
     try {
+      // raid 데이터 캐시메모리에서 가져오기
+      const raidDatas = {
+        levels: await this.cacheManager.get('levels'),
+      };
+
+      const raidData = raidDatas.levels.find(
+        (data) => data.level === patchBossRaidRequest.level,
+      );
+
       // 입력한 userId에 해당하는 값 추출
-      const findUserIdByid = await this.bossRaidRecordRepository.findOne({
+      const raidRecord = await this.bossRaidRecordRepository.findOne({
         where: {
-          userId: patchBossRaidRequest.userId,
           id: patchBossRaidRequest.raidRecordId,
         },
       });
 
-      if (!findUserIdByid) {
+      // 해당하는 RaidRecord 예외처리
+      if (!raidRecord) {
+        return response.NON_EXIST_RAID_RECORD;
+      }
+
+      // UserId와 dto userId 비교후 예외처리
+      if (!raidRecord.userId !== patchBossRaidRequest.userId) {
         return response.NON_EXIST_USER;
       }
 
-      let raidDatas = {
-        bossRaidLimitSeconds: await this.cacheManager.get(
-          'bossRaidLimitSeconds',
-        ),
-        levels: await this.cacheManager.get('levels'),
-      };
-
-      // static data 캐시 메모리 적재 함수
-      if (!raidDatas.levels) {
-        await this.getStaticData();
-
-        raidDatas = {
-          bossRaidLimitSeconds: await this.cacheManager.get(
-            'bossRaidLimitSeconds',
-          ),
-          levels: JSON.parse(await this.cacheManager.get('levels')),
-        };
+      // 레이드 제한시간 비교 후 예외처리
+      const endTime = generateDateFormatComponent();
+      if (raidRecord.endTime < endTime) {
+        return response.FAIL_RAID;
       }
 
-      const raidData = raidDatas.levels.find(
-        (data) => data.level === findUserIdByid.level,
-      );
-
-      // bossRaid 상태값 수정수정
+      // 레이드 종료시간, score 업데이트
       await queryRunner.manager.update(
         BossRaidRecordEntity,
         {
-          id: findUserIdByid.id,
+          id: raidRecord.id,
+        },
+        { endTime: endTime },
+      );
+
+      await queryRunner.manager.update(
+        BossRaidRecordEntity,
+        {
+          id: raidRecord.id,
         },
         { score: raidData.score },
+      );
+
+      // 유저 점수 종합 후 캐시 메모리 적재
+      const totalScore = await this.dataSource
+        .createQueryBuilder(BossRaidRecordEntity, 'bossRaidRecord')
+        .select('SUM(bossRaidRecord.score)', 'sum')
+        .where('bossRaidRecord.userId = :userId', {
+          userId: patchBossRaidRequest.userId,
+        })
+        .getRawOne();
+
+      const cacheTotalScore = totalScore + raidData.score;
+
+      // 어떻게 랭킹을 넣을지?
+      const rankingInfo = {
+        userId: patchBossRaidRequest.userId,
+        totalScore: cacheTotalScore,
+      };
+
+      await this.cacheManager.set(
+        `rank${patchBossRaidRequest.userId}`,
+        rankingInfo,
+        {
+          ttl: 10000,
+        },
       );
 
       // Response의 result 객체에 Data를 담는 부분
@@ -192,6 +220,10 @@ export class BossRaidService {
 
       // Commit
       await queryRunner.commitTransaction();
+
+      // 키값 초기화
+      await this.cacheManager.del('levels');
+      await this.cacheManager.del('bossRaidLimitSeconds');
 
       return result;
     } catch (error) {
@@ -221,11 +253,11 @@ export class BossRaidService {
       await this.cacheManager.set(
         'bossRaidLimitSeconds',
         String(raidInfo.bossRaidLimitSeconds),
-        { ttl: 180 },
+        { ttl: 1800 },
       );
 
       await this.cacheManager.set('levels', JSON.stringify(raidInfo.levels), {
-        ttl: 180,
+        ttl: 1800,
       });
 
       const { condition } = await resData.data.current;

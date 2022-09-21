@@ -34,6 +34,11 @@ export const response = {
     code: 403,
     message: '현재 접속 할 수 없습니다.',
   },
+  FAIL_RAID: {
+    isSuccess: false,
+    code: 403,
+    message: '레이드 시간이 지났습니다..',
+  },
   ERROR: {
     isSuccess: false,
     code: 500,
