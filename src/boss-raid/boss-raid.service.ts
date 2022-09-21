@@ -22,6 +22,8 @@ export class BossRaidService {
     private dataSource: DataSource,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(BossRaidRecordEntity)
+    private readonly bossRaidRecordRepository: Repository<BossRaidRecordEntity>,
     private readonly httpService: HttpService,
   ) {}
 
@@ -57,7 +59,7 @@ export class BossRaidService {
     await queryRunner.connect();
     await queryRunner.startTransaction('READ COMMITTED');
     try {
-      let raidData = {
+      let raidDatas = {
         bossRaidLimitSeconds: await this.cacheManager.get(
           'bossRaidLimitSeconds',
         ),
@@ -65,10 +67,10 @@ export class BossRaidService {
       };
 
       // static data 캐시 메모리 적재 함수
-      if (!raidData.levels) {
+      if (!raidDatas.levels) {
         await this.getStaticData();
 
-        raidData = {
+        raidDatas = {
           bossRaidLimitSeconds: await this.cacheManager.get(
             'bossRaidLimitSeconds',
           ),
@@ -76,45 +78,58 @@ export class BossRaidService {
         };
       }
 
-      raidData.levels.forEach((object) => {
-        if (object.level == postBossRaidRequest.level) {
-          console.log('level:', object.score);
-          const raidLevel = object.level;
-          const raidScore = object.score;
-        }
+      const raidData = raidDatas.levels.find(
+        (data) => data.level === postBossRaidRequest.level,
+      );
+
+      const currentTime = new Date();
+
+      const recentData = await queryRunner.manager.find(BossRaidRecordEntity, {
+        order: { enterTime: 'DESC' },
+        take: 1,
       });
 
-      // User 인스턴스 생성후, 정보 담는 부분
-      const bossRaidRecord = new BossRaidRecordEntity();
-      bossRaidRecord.userId = postBossRaidRequest.userId;
-      bossRaidRecord.createdAt = defaultCurrentDateTime();
-      bossRaidRecord.updatedAt = defaultCurrentDateTime();
-      bossRaidRecord.status = Status.ACTIVE;
-      bossRaidRecord.enterTime = defaultCurrentDateTime();
-      bossRaidRecord.canEnter = false;
-      bossRaidRecord.endTime = null;
-      bossRaidRecord.level = null;
-      bossRaidRecord.score = null;
-      bossRaidRecord.expireTime = defaultThreeMinuteDateTime(
-        raidData.bossRaidLimitSeconds/60,
-      );
-      const bossRaidRecordData = await queryRunner.manager.save(bossRaidRecord);
+      if (
+        recentData[0] === undefined ||
+        recentData[0].expireTime < currentTime
+      ) {
+        const enterTime = currentTime;
+        currentTime.setMinutes(
+          currentTime.getMinutes() +
+            Number(raidDatas.bossRaidLimitSeconds) / 60,
+        );
+        const expireTime = currentTime;
 
-      // 키값 초기화
-      await this.cacheManager.del('key');
+        // User 인스턴스 생성후, 정보 담는 부분
+        const bossRaidRecord = new BossRaidRecordEntity();
+        bossRaidRecord.userId = postBossRaidRequest.userId;
+        bossRaidRecord.status = Status.ACTIVE;
+        bossRaidRecord.enterTime = enterTime;
+        bossRaidRecord.endTime = null;
+        bossRaidRecord.expireTime = expireTime;
+        bossRaidRecord.level = raidData.level;
+        bossRaidRecord.score = null;
+        const bossRaidRecordData = await queryRunner.manager.save(
+          bossRaidRecord,
+        );
+        // 키값 초기화
+        await this.cacheManager.del('key');
 
-      // Response의 result 객체에 Data를 담는 부분
-      const data = {
-        isEntered: 'true',
-        raidRecordId: bossRaidRecordData.id,
-      };
+        // Response의 result 객체에 Data를 담는 부분
+        const data = {
+          isEntered: 'true',
+          raidRecordId: bossRaidRecordData.id,
+        };
 
-      const result = makeResponse(response.SUCCESS, data);
+        const result = makeResponse(response.SUCCESS, data);
 
-      // Commit
-      await queryRunner.commitTransaction();
+        // Commit
+        await queryRunner.commitTransaction();
 
-      return result;
+        return result;
+      } else {
+        return response.NOT_ACCESS_RAID;
+      }
     } catch (error) {
       // Rollback
       await queryRunner.rollbackTransaction();
@@ -128,23 +143,50 @@ export class BossRaidService {
   async closeBossRaid(patchBossRaidRequest) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
-    await queryRunner.startTransaction();
+    await queryRunner.startTransaction('READ COMMITTED');
     try {
-      // 입력한 번호에 해당하는 유저값 추출
-      // const findBossRaidIdByLevel = await this.bossRaidRepository.findOne({
-      //   where: {
-      //     level: postBossRaidRequest.level,
-      //   },
-      // });
+      // 입력한 userId에 해당하는 값 추출
+      const findUserIdByid = await this.bossRaidRecordRepository.findOne({
+        where: {
+          userId: patchBossRaidRequest.userId,
+          id: patchBossRaidRequest.raidRecordId,
+        },
+      });
 
-      // board 수정
+      if (!findUserIdByid) {
+        return response.NON_EXIST_USER;
+      }
+
+      let raidDatas = {
+        bossRaidLimitSeconds: await this.cacheManager.get(
+          'bossRaidLimitSeconds',
+        ),
+        levels: await this.cacheManager.get('levels'),
+      };
+
+      // static data 캐시 메모리 적재 함수
+      if (!raidDatas.levels) {
+        await this.getStaticData();
+
+        raidDatas = {
+          bossRaidLimitSeconds: await this.cacheManager.get(
+            'bossRaidLimitSeconds',
+          ),
+          levels: JSON.parse(await this.cacheManager.get('levels')),
+        };
+      }
+
+      const raidData = raidDatas.levels.find(
+        (data) => data.level === findUserIdByid.level,
+      );
+
+      // bossRaid 상태값 수정수정
       await queryRunner.manager.update(
         BossRaidRecordEntity,
         {
-          userId: patchBossRaidRequest.userId,
-          raidRecordId: patchBossRaidRequest.raidRecordId,
+          id: findUserIdByid.id,
         },
-        { canEnter: true },
+        { score: raidData.score },
       );
 
       // Response의 result 객체에 Data를 담는 부분

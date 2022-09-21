@@ -58,14 +58,6 @@ export class UserService {
         return response.NON_EXIST_USER;
       }
 
-      // const totalScore = await this.dataSource
-      //   .createQueryBuilder(BossRaidRecordEntity, 'bossRaidRecord')
-      //   .where('userId IN (:userId)', {
-      //     userId: id,
-      //   })
-      //   .addSelect('SUM(bossRaidRecord.score)', 'sum')
-      //   .groupBy('userId')
-      //   .getRawOne();
       const totalScore = await this.dataSource
         .createQueryBuilder(BossRaidRecordEntity, 'bossRaidRecord')
         .select('SUM(bossRaidRecord.score)', 'sum')

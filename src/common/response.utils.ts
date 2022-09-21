@@ -24,6 +24,16 @@ export const response = {
     code: 404,
     message: '유저가 존재하지 않습니다.',
   },
+  NON_EXIST_RAID_RECORD: {
+    isSuccess: false,
+    code: 404,
+    message: '레이드 기록이 존재하지 않습니다.',
+  },
+  NOT_ACCESS_RAID: {
+    isSuccess: false,
+    code: 403,
+    message: '현재 접속 할 수 없습니다.',
+  },
   ERROR: {
     isSuccess: false,
     code: 500,
