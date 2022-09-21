@@ -28,9 +28,6 @@ export class BossRaidService {
   ) {}
 
   async retrieveBossRaidStatus() {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
     try {
       // enterTime으로 최신 정렬 후 1개만 조회
       const bossRaid = await this.bossRaidRecordRepository.find({
@@ -40,7 +37,7 @@ export class BossRaidService {
 
       // 현재시간을 구한 후 비교 하여 들어 갈 수 있는지 없는지 확인.
       const currentTime = generateDateFormatComponent();
-      if (bossRaid[0] === undefined || bossRaid[0].endTime < currentTime) {
+      if (bossRaid[0].expireTime < currentTime || bossRaid[0] === undefined) {
         const data = {
           canEnter: true,
         };
@@ -59,11 +56,8 @@ export class BossRaidService {
       }
     } catch (error) {
       // Rollback
-      await queryRunner.rollbackTransaction();
       console.log(error);
       return response.ERROR;
-    } finally {
-      await queryRunner.release();
     }
   }
 
