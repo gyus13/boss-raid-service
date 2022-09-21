@@ -5,6 +5,7 @@ import { response } from '../common/response.utils';
 import {
   defaultCurrentDateTime,
   defaultThreeMinuteDateTime,
+  generateDateFormatComponent,
   makeResponse,
 } from '../config/function.utils';
 import { DataSource, Repository } from 'typeorm';
@@ -82,7 +83,7 @@ export class BossRaidService {
         (data) => data.level === postBossRaidRequest.level,
       );
 
-      const currentTime = new Date();
+      const currentTime = generateDateFormatComponent();
 
       const recentData = await queryRunner.manager.find(BossRaidRecordEntity, {
         order: { enterTime: 'DESC' },
@@ -94,12 +95,7 @@ export class BossRaidService {
         recentData[0].expireTime < currentTime
       ) {
         const enterTime = currentTime;
-        currentTime.setMinutes(
-          currentTime.getMinutes() +
-            Number(raidDatas.bossRaidLimitSeconds) / 60,
-        );
-        const expireTime = currentTime;
-
+        const expireTime = defaultCurrentDateTime(currentTime, raidDatas);
         // User 인스턴스 생성후, 정보 담는 부분
         const bossRaidRecord = new BossRaidRecordEntity();
         bossRaidRecord.userId = postBossRaidRequest.userId;
