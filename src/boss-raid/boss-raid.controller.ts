@@ -1,7 +1,12 @@
-import { Controller, Get, Param, Patch, Post } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {Body, Controller, Get, Param, Patch, Post} from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { BossRaidService } from './boss-raid.service';
-import {GetBossRaidResponse} from "./dto/get-boss-raid.response.dto";
+import { GetBossRaidResponse } from './dto/get-boss-raid.response.dto';
+import { PostBossRaidRequest } from './dto/post-boss-raid.request.dto';
+import { PostBossRaidResponse } from './dto/post-boss-raid.response.dto';
+import { PatchBossRaidRequest } from './dto/patch-boss-raid.request.dto';
+import {PostBossRaidRankResponse} from "./dto/post-boss-raid-rank.response.dto";
+import {PostBossRaidRankRequestDto} from "./dto/post-boss-raid-rank.request.dto";
 
 @Controller('bossRaid')
 export class BossRaidController {
@@ -24,47 +29,31 @@ export class BossRaidController {
   @ApiOperation({ summary: '보스레이드 상태 조회 API' })
   @Get()
   async getBossRaid() {
-    // return await this.userService.retrieveUserByUserId(id);
+    return await this.bossRaidService.retrieveBossRaidStatus();
   }
 
   /**
    * description : 보스레이드 시작 API
-   * @param non
    * @returns non
+   * @param postOrderRequestDto
    */
   @ApiResponse({
     status: 200,
     description: '성공',
-    // type: PostUserResponse,
+    type: PostBossRaidResponse,
   })
   @ApiResponse({
     status: 500,
     description: '서버 에러',
   })
   @ApiOperation({ summary: '보스레이드 시작 API' })
-  @Post('/enter')
-  async postBossRaid() {
-    // return await this.userService.createUser();
-  }
-
-  /**
-   * description : 보스레이드 시작 API
-   * @param non
-   * @returns non
-   */
-  @ApiResponse({
-    status: 200,
-    description: '성공',
-    // type: PostUserResponse,
+  @ApiBody({
+    description: '보스 레이드 시작 DTO',
+    type: PostBossRaidRequest,
   })
-  @ApiResponse({
-    status: 500,
-    description: '서버 에러',
-  })
-  @ApiOperation({ summary: '보스레이드 시작 API' })
   @Post('/enter')
-  async postBossRaid() {
-    // return await this.userService.createUser();
+  async postBossRaid(@Body() postBossRaidRequest: PostBossRaidRequest) {
+    return await this.bossRaidService.createBossRaid(postBossRaidRequest);
   }
 
   /**
@@ -75,7 +64,6 @@ export class BossRaidController {
   @ApiResponse({
     status: 200,
     description: '성공',
-    // type: PostUserResponse,
   })
   @ApiResponse({
     status: 500,
@@ -83,8 +71,12 @@ export class BossRaidController {
   })
   @ApiOperation({ summary: '보스레이드 종료 API' })
   @Patch('/end')
-  async patchBossRaid() {
-    // return await this.userService.createUser();
+  @ApiBody({
+    description: '보스레이드 종료 DTO',
+    type: PatchBossRaidRequest,
+  })
+  async patchBossRaid(@Body() patchBossRaidRequest: PatchBossRaidRequest) {
+    return await this.bossRaidService.closeBossRaid(patchBossRaidRequest);
   }
 
   /**
@@ -95,15 +87,19 @@ export class BossRaidController {
   @ApiResponse({
     status: 200,
     description: '성공',
-    // type: PostUserResponse,
+    type: PostBossRaidRankResponse,
   })
   @ApiResponse({
     status: 500,
     description: '서버 에러',
   })
-  @ApiOperation({ summary: '보스레이드 랭킹 조 API' })
-  @Get('/topRankerList')
-  async getBossRaidRank() {
-    // return await this.userService.createUser();
+  @ApiBody({
+    description: '보스레이드 랭킹 조회 API',
+    type: PostBossRaidRankRequestDto,
+  })
+  @ApiOperation({ summary: '보스레이드 랭킹 조회 API' })
+  @Post('/topRankerList')
+  async getBossRaidRankList(@Body() postBossRaidRankRequestDto: PostBossRaidRankRequestDto) {
+    // return await this.bossRaidService.retrieveRankList(postBossRaidRankRequestDto);
   }
 }

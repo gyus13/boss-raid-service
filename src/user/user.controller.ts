@@ -24,7 +24,7 @@ export class UserController {
   @ApiOperation({ summary: '유저조회 API' })
   @Get('/:userId')
   async getUser(@Param('userId') id: number) {
-    // return await this.userService.retrieveUserByUserId(id);
+    return await this.userService.retrieveUserByUserId(id);
   }
 
   /**
@@ -44,6 +44,6 @@ export class UserController {
   @ApiOperation({ summary: '유저생성 API' })
   @Post()
   async postUser() {
-    // return await this.userService.createUser();
+    return await this.userService.createUser();
   }
 }
