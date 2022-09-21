@@ -5,6 +5,8 @@ import { GetBossRaidResponse } from './dto/get-boss-raid.response.dto';
 import { PostBossRaidRequest } from './dto/post-boss-raid.request.dto';
 import { PostBossRaidResponse } from './dto/post-boss-raid.response.dto';
 import { PatchBossRaidRequest } from './dto/patch-boss-raid.request.dto';
+import {PostBossRaidRankResponse} from "./dto/post-boss-raid-rank.response.dto";
+import {PostBossRaidRankRequestDto} from "./dto/post-boss-raid-rank.request.dto";
 
 @Controller('bossRaid')
 export class BossRaidController {
@@ -85,15 +87,19 @@ export class BossRaidController {
   @ApiResponse({
     status: 200,
     description: '성공',
-    // type: PostUserResponse,
+    type: PostBossRaidRankResponse,
   })
   @ApiResponse({
     status: 500,
     description: '서버 에러',
   })
+  @ApiBody({
+    description: '보스레이드 랭킹 조회 API',
+    type: PostBossRaidRankRequestDto,
+  })
   @ApiOperation({ summary: '보스레이드 랭킹 조회 API' })
-  @Get('/topRankerList')
-  async getBossRaidRankList() {
-    // return await this.userService.retrieveRankList();
+  @Post('/topRankerList')
+  async getBossRaidRankList(@Body() postBossRaidRankRequestDto: PostBossRaidRankRequestDto) {
+    // return await this.bossRaidService.retrieveRankList(postBossRaidRankRequestDto);
   }
 }

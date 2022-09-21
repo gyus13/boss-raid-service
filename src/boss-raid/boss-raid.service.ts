@@ -4,7 +4,6 @@ import { HttpService } from '@nestjs/axios';
 import { response } from '../common/response.utils';
 import {
   defaultCurrentDateTime,
-  defaultThreeMinuteDateTime,
   generateDateFormatComponent,
   makeResponse,
 } from '../config/function.utils';
@@ -33,18 +32,31 @@ export class BossRaidService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      // Response의 result 객체에 Data를 담는 부분
-      const data = {
-        canEnter: 'number',
-        enteredUserId: 1,
-      };
+      // enterTime으로 최신 정렬 후 1개만 조회
+      const bossRaid = await this.bossRaidRecordRepository.find({
+        order: { enterTime: 'DESC' },
+        take: 1,
+      });
 
-      const result = makeResponse(response.SUCCESS, data);
+      // 현재시간을 구한 후 비교 하여 들어 갈 수 있는지 없는지 확인.
+      const currentTime = generateDateFormatComponent();
+      if (bossRaid[0] === undefined || bossRaid[0].endTime < currentTime) {
+        const data = {
+          canEnter: true,
+        };
+        const result = makeResponse(response.SUCCESS, data);
 
-      // Commit
-      await queryRunner.commitTransaction();
+        return result;
+      } else {
+        const data = {
+          canEnter: false,
+          enterdUserId: bossRaid[0].userId,
+        };
 
-      return result;
+        const result = makeResponse(response.SUCCESS, data);
+
+        return result;
+      }
     } catch (error) {
       // Rollback
       await queryRunner.rollbackTransaction();
@@ -111,7 +123,7 @@ export class BossRaidService {
 
         // Response의 result 객체에 Data를 담는 부분
         const data = {
-          isEntered: 'true',
+          isEntered: true,
           raidRecordId: bossRaidRecordData.id,
         };
 
@@ -122,7 +134,14 @@ export class BossRaidService {
 
         return result;
       } else {
-        return response.NOT_ACCESS_RAID;
+        // Response의 result 객체에 Data를 담는 부분
+        const data = {
+          isEntered: false,
+        };
+
+        const result = makeResponse(response.SUCCESS, data);
+
+        return result;
       }
     } catch (error) {
       // Rollback
