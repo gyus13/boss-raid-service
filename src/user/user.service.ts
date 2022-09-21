@@ -4,6 +4,7 @@ import { makeResponse } from '../config/function.utils';
 import { UserEntity } from '../entity/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import { BossRaidRecordEntity } from '../entity/boss-raid-record.entity';
 
 @Injectable()
 export class UserService {
@@ -57,11 +58,37 @@ export class UserService {
         return response.NON_EXIST_USER;
       }
 
+      // const totalScore = await this.dataSource
+      //   .createQueryBuilder(BossRaidRecordEntity, 'bossRaidRecord')
+      //   .where('userId IN (:userId)', {
+      //     userId: id,
+      //   })
+      //   .addSelect('SUM(bossRaidRecord.score)', 'sum')
+      //   .groupBy('userId')
+      //   .getRawOne();
+      const totalScore = await this.dataSource
+        .createQueryBuilder(BossRaidRecordEntity, 'bossRaidRecord')
+        .select('SUM(bossRaidRecord.score)', 'sum')
+        .where('bossRaidRecord.userId = :userId', { userId: 1 })
+        .getRawOne();
+
+      const bossRaidHistory = await this.dataSource
+        .createQueryBuilder(BossRaidRecordEntity, 'bossRaidRecord')
+        .where('userId IN (:userId)', {
+          userId: id,
+        })
+        .select([
+          'bossRaidRecord.id',
+          'bossRaidRecord.score',
+          'bossRaidRecord.enterTime',
+          'bossRaidRecord.endTime',
+        ])
+        .getMany();
+
       // Response의 result 객체에 Data를 담는 부분
       const data = {
-        totalScore: 'number',
-        // bossRaidHistory:
-        // { raidRecordId:number, score:number, enterTime:string, endTime:string },
+        totalScore: Number(totalScore.sum),
+        bossRaidHistory: bossRaidHistory,
       };
 
       const result = makeResponse(response.SUCCESS, data);
@@ -71,7 +98,7 @@ export class UserService {
       return result;
     } catch (error) {
       // Rollback
-      console.log(error)
+      console.log(error);
       return response.ERROR;
     }
   }

@@ -30,6 +30,6 @@ export class BossRaidRecordEntity extends CommonEntity {
   score: number;
 
   @ApiProperty({ description: '유저' })
-  @ManyToOne(() => UserEntity, { eager: true })
+  @Column()
   userId: number;
 }

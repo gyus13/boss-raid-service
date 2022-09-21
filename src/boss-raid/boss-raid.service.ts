@@ -96,7 +96,7 @@ export class BossRaidService {
       bossRaidRecord.level = null;
       bossRaidRecord.score = null;
       bossRaidRecord.expireTime = defaultThreeMinuteDateTime(
-        raidData.bossRaidLimitSeconds,
+        raidData.bossRaidLimitSeconds/60,
       );
       const bossRaidRecordData = await queryRunner.manager.save(bossRaidRecord);
 
@@ -105,7 +105,7 @@ export class BossRaidService {
 
       // Response의 result 객체에 Data를 담는 부분
       const data = {
-        isEntered: 'boolean',
+        isEntered: 'true',
         raidRecordId: bossRaidRecordData.id,
       };
 

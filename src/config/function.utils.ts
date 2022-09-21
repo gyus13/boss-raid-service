@@ -114,12 +114,12 @@ export function generateThreeMinuteFormatComponent(raidTime: number) {
       : date.getHours().toString();
 
   const min =
-    date.getMinutes() < 10
+    date.getMinutes() + raidTime < 10
       ? '0' + date.getMinutes().toString()
       : date.getMinutes().toString();
 
   const sec =
-    date.getSeconds() + raidTime < 10
+    date.getSeconds()  < 10
       ? '0' + date.getSeconds().toString()
       : date.getSeconds().toString();
 
